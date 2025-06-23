@@ -1,7 +1,8 @@
 [mainConfig]
-appName = "MyChat"
+appName = "MyMusicPlatform"
 host = "0.0.0.0"
 port = 8000
+musicFilePath = "/static"
 
 [emailConfig]
 authcode = "letluzytpsexdhcj"
@@ -27,4 +28,12 @@ charset =  "utf8mb4"
  issuer= "huanheart"
  subject= "MyChat"
  key= "MyChat-v1"
+
+[rabbitmqConfig]
+  host= "127.0.0.1"
+  port= 5672
+  username= "admin"
+  password= ''
+  vhost= "admin"
+
 

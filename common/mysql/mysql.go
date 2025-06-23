@@ -78,5 +78,6 @@ func InsertUser(user *model.User) (*model.User, error) {
 func migration() error {
 	return DB.AutoMigrate(
 		new(model.User),
+		new(model.MusicFile),
 	)
 }

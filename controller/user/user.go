@@ -6,6 +6,7 @@ import (
 	"MyChat/model"
 	"MyChat/service/user"
 	"MyChat/utils"
+	"MyChat/utils/myjwt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -19,7 +20,7 @@ type (
 	// omitempty当字段为空的时候，不返回这个东西
 	LoginResponse struct {
 		controller.Response
-		UserID uint   `json:"user_id,omitempty"`
+		UserID int64  `json:"user_id,omitempty"`
 		Token  string `json:"token,omitempty"`
 	}
 	//验证码由后端生成，存放到redis中，固然需要先发送一次请求CaptchaRequest,然后用返回的验证码
@@ -32,7 +33,7 @@ type (
 	//注册成功之后，直接让其进行登录状态
 	RegisterResponse struct {
 		controller.Response
-		UserID uint   `json:"user_id,omitempty"`
+		UserID int64  `json:"user_id,omitempty"`
 		Token  string `json:"token,omitempty"`
 	}
 
@@ -65,7 +66,7 @@ func Login(c *gin.Context) {
 		return
 	}
 	//3:返回userid 以及一个Token
-	token, err := utils.GenerateToken(userInformation.ID, userInformation.Username)
+	token, err := myjwt.GenerateToken(userInformation.ID, userInformation.Username)
 
 	if err != nil {
 		c.JSON(http.StatusOK, res.CodeOf(code.CodeServerBusy))
@@ -99,7 +100,7 @@ func Register(c *gin.Context) {
 	}
 
 	// 生成Token
-	token, err := utils.GenerateToken(userInformation.ID, userInformation.Username)
+	token, err := myjwt.GenerateToken(userInformation.ID, userInformation.Username)
 
 	if err != nil {
 		c.JSON(http.StatusOK, res.CodeOf(code.CodeServerBusy))

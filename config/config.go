@@ -11,15 +11,15 @@ type EmailConfig struct {
 }
 
 type RedisConfig struct {
-	RedisHost     string `toml:"host"`
 	RedisPort     int    `toml:"port"`
-	RedisPassword string `toml:"password"`
 	RedisDb       int    `toml:"db"`
+	RedisHost     string `toml:"host"`
+	RedisPassword string `toml:"password"`
 }
 
 type MysqlConfig struct {
-	MysqlHost         string `toml:"host"`
 	MysqlPort         int    `toml:"port"`
+	MysqlHost         string `toml:"host"`
 	MysqlUser         string `toml:"user"`
 	MysqlPassword     string `toml:"password"`
 	MysqlDatabaseName string `toml:"databaseName"`
@@ -34,9 +34,18 @@ type JwtConfig struct {
 }
 
 type MainConfig struct {
-	AppName string `toml:"appName"`
-	Host    string `toml:"host"`
-	Port    int    `toml:"port"`
+	Port          int    `toml:"port"`
+	AppName       string `toml:"appName"`
+	Host          string `toml:"host"`
+	MusicFilePath string `toml:"musicFilePath"`
+}
+
+type Rabbitmq struct {
+	RabbitmqPort     int    `toml:"port"`
+	RabbitmqHost     string `toml:"host"`
+	RabbitmqUsername string `toml:"username"`
+	RabbitmqPassword string `toml:"password"`
+	RabbitmqVhost    string `toml:"vhost"`
 }
 
 type Config struct {
@@ -45,6 +54,7 @@ type Config struct {
 	MysqlConfig `toml:"mysqlConfig"`
 	JwtConfig   `toml:"jwtConfig"`
 	MainConfig  `toml:"mainConfig"`
+	Rabbitmq    `toml:"rabbitmqConfig"`
 }
 
 var config *Config
