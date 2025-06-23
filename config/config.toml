@@ -3,6 +3,9 @@ appName = "MyMusicPlatform"
 host = "0.0.0.0"
 port = 8000
 musicFilePath = "/static"
+# 文件存储ip地址，一般是本地（后续接入oss接口）
+musicFileIp = "192.168.15.1"
+
 
 [emailConfig]
 authcode = "letluzytpsexdhcj"

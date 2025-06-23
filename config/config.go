@@ -38,6 +38,7 @@ type MainConfig struct {
 	AppName       string `toml:"appName"`
 	Host          string `toml:"host"`
 	MusicFilePath string `toml:"musicFilePath"`
+	MusicFileIp   string `toml:"musicFileIp"`
 }
 
 type Rabbitmq struct {

@@ -58,6 +58,12 @@ func InitMysql() error {
 	return migration()
 }
 
+func GetMusicfile(user_id int64, file_id string) (*model.MusicFile, error) {
+	musicfile := new(model.MusicFile)
+	err := DB.Where("user_id = ? AND uuid = ?", user_id, file_id).First(musicfile).Error
+	return musicfile, err
+}
+
 func GetUserByEmail(email string) (*model.User, error) {
 	user := new(model.User)
 	err := DB.Where("email = ?", email).First(user).Error
