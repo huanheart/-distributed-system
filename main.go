@@ -2,6 +2,7 @@ package main
 
 import (
 	"MyChat/common/mysql"
+	"MyChat/common/rabbitmq"
 	"MyChat/common/redis"
 	"MyChat/config"
 	"MyChat/router"
@@ -26,6 +27,8 @@ func main() {
 	}
 	//初始化redis
 	redis.Init()
+
+	rabbitmq.InitRabbitMQ()
 
 	err := StartServer(host, port) // 启动 HTTP 服务，监听 8080 端口
 	if err != nil {

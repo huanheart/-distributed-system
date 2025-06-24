@@ -9,6 +9,7 @@ import (
 	"strings"
 )
 
+// 从头中读取jwt
 func Auth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		res := new(controller.Response)

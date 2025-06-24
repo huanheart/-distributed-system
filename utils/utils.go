@@ -3,8 +3,10 @@ package utils
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"github.com/google/uuid"
 	"math/rand"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -25,4 +27,13 @@ func MD5(str string) string {
 	m := md5.New()
 	m.Write([]byte(str))
 	return hex.EncodeToString(m.Sum(nil))
+}
+
+func GenerateUUID() string {
+	return uuid.New().String()
+}
+
+// 获取文件名
+func GetFilePreName(filename, fileExt string) string {
+	return strings.TrimSuffix(filename, fileExt) // "hello_song"
 }

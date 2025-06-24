@@ -81,6 +81,17 @@ func InsertUser(user *model.User) (*model.User, error) {
 	return user, err
 }
 
+func InsertMusicFile(file *model.MusicFile) (*model.MusicFile, error) {
+	err := DB.Create(&file).Error
+	return file, err
+}
+
+func MarkMusicFileUploaded(filePath string, value bool) error {
+	return DB.Model(&model.MusicFile{}).
+		Where("file_path = ?", filePath).
+		Update("is_upload", value).Error
+}
+
 func migration() error {
 	return DB.AutoMigrate(
 		new(model.User),

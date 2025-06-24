@@ -11,9 +11,10 @@ import (
 )
 
 type (
-	MusicUploadRequest struct {
-	}
+	//MusicUploadRequest struct {
+	//}
 	MusicUploadResponse struct {
+		FileID string `json:"file_id" binding:"required"`
 		controller.Response
 	}
 
@@ -29,10 +30,27 @@ type (
 	}
 )
 
-func MusicUpload(c *gin.Context) {
-	req := new(MusicUploadRequest)
-	res := new(MusicUploadResponse)
+//todo:后续还要提供获取所有音乐文件的接口，在用户登录界面的时候得进行一个加载
 
+func MusicUpload(c *gin.Context) {
+	//req := new(MusicUploadRequest)
+	res := new(MusicUploadResponse)
+	file, err := c.FormFile("file")
+	if err != nil {
+		res.CodeOf(code.CodeInvalidParams)
+		c.JSON(http.StatusOK, res)
+	}
+
+	userID := c.GetInt64("user_id") // 从中间件 Set() 中获取
+	music_file, ok := music.MusicUpload(userID, file)
+	if !ok {
+		res.CodeOf(code.CodeServerBusy)
+		c.JSON(http.StatusOK, res)
+	}
+	// 8. 返回成功响应
+	res.Success()
+	res.FileID = music_file.UUID
+	c.JSON(http.StatusOK, res)
 }
 
 // 下载需要传音乐的uuid，（jwt，这个在user_id中）
@@ -54,10 +72,7 @@ func MusicDownload(c *gin.Context) {
 		c.JSON(http.StatusOK, res.CodeOf(code.FileNotFind))
 		return
 	}
-	//2:如果有，获取，如果没有，那么返回false，文件不存在
-
 	res.Success()
-	//todo:硬编码待删除
 	res.FilePath = config.GetConfig().MusicFileIp + musicfile.FilePath
 	c.JSON(http.StatusOK, res)
 }
