@@ -29,7 +29,7 @@ func IsExistMusicFile(user_id int64, file_id string) (*model.MusicFile, bool) {
 		return nil, false
 	}
 	//说明此时还没有上传完毕
-	if !musicfile.IsUpload {
+	if musicfile.IsUpload == 0 {
 		return nil, false
 	}
 
@@ -69,7 +69,7 @@ func MusicUpload(user_id int64, file *multipart.FileHeader) (*model.MusicFile, b
 	if _, err := io.Copy(out, src); err != nil {
 		return nil, false
 	}
-	music_file, ok := music.UploadMusicFile(fileID, utils.GetFilePreName(file.Filename, fileExt), savePath, user_id, file.Size, false)
+	music_file, ok := music.UploadMusicFile(fileID, utils.GetFilePreName(file.Filename, fileExt), savePath, user_id, file.Size, 0)
 	if !ok {
 		return nil, ok
 	}

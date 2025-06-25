@@ -5,6 +5,7 @@ import (
 	"MyChat/controller"
 	"MyChat/utils/myjwt"
 	"github.com/gin-gonic/gin"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -24,7 +25,7 @@ func Auth() gin.HandlerFunc {
 
 		// 截取 token 字符串（去掉 Bearer 前缀）
 		token := strings.TrimPrefix(authHeader, "Bearer ")
-
+		log.Println("token is ", token)
 		// 解析 token
 		claimsId, ok := myjwt.ParseToken(token)
 		if !ok {

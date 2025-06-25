@@ -15,7 +15,7 @@ func IsExistMusicFile(user_id int64, file_id string) bool {
 	return file.IsExistFile(pattern)
 }
 
-func UploadMusicFile(uuid, music_name, file_path string, user_id, file_size int64, isupload bool) (*model.MusicFile, bool) {
+func UploadMusicFile(uuid, music_name, file_path string, user_id, file_size int64, isupload int64) (*model.MusicFile, bool) {
 	if music_file, err := mysql.InsertMusicFile(&model.MusicFile{
 		UUID:      uuid,
 		UserID:    user_id,

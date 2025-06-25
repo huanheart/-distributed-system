@@ -86,7 +86,7 @@ func InsertMusicFile(file *model.MusicFile) (*model.MusicFile, error) {
 	return file, err
 }
 
-func MarkMusicFileUploaded(filePath string, value bool) error {
+func MarkMusicFileUploaded(filePath string, value int64) error {
 	return DB.Model(&model.MusicFile{}).
 		Where("file_path = ?", filePath).
 		Update("is_upload", value).Error

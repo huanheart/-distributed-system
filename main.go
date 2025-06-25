@@ -12,6 +12,7 @@ import (
 
 func StartServer(addr string, port int) error {
 	r := router.InitRouter()
+	r.Static(config.GetConfig().HttpFilePath, config.GetConfig().MusicFilePath)
 	return r.Run(fmt.Sprintf("%s:%d", addr, port))
 }
 

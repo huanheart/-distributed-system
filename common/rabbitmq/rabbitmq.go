@@ -4,6 +4,7 @@ import (
 	"MyChat/config"
 	"fmt"
 	"github.com/streadway/amqp"
+	"log"
 )
 
 // 全局connection对象
@@ -17,7 +18,7 @@ func initConn() {
 		"amqp://%s:%s@%s:%d/%s",
 		c.RabbitmqUsername, c.RabbitmqPassword, c.RabbitmqHost, c.RabbitmqPort, c.RabbitmqVhost,
 	)
-
+	log.Println("test " + mqUrl)
 	var err error
 	conn, err = amqp.Dial(mqUrl)
 	if err != nil {

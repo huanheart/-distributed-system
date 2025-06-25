@@ -32,6 +32,6 @@ func Upload(msg *amqp.Delivery) error {
 	if err != nil {
 		return err
 	}
-	mysql.MarkMusicFileUploaded(param.FilePath, true)
+	mysql.MarkMusicFileUploaded(param.FilePath, 1)
 	return nil
 }

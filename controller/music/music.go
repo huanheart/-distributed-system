@@ -2,11 +2,12 @@ package music
 
 import (
 	"MyChat/common/code"
-	"MyChat/config"
 	"MyChat/controller"
 	"MyChat/model"
 	"MyChat/service/music"
+	"MyChat/utils"
 	"github.com/gin-gonic/gin"
+	"log"
 	"net/http"
 )
 
@@ -73,6 +74,9 @@ func MusicDownload(c *gin.Context) {
 		return
 	}
 	res.Success()
-	res.FilePath = config.GetConfig().MusicFileIp + musicfile.FilePath
+
+	res.FilePath = utils.GetHttpPath(musicfile.FilePath)
+
+	log.Println("res.FilePath is " + res.FilePath)
 	c.JSON(http.StatusOK, res)
 }

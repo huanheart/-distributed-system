@@ -38,6 +38,7 @@ type MainConfig struct {
 	AppName       string `toml:"appName"`
 	Host          string `toml:"host"`
 	MusicFilePath string `toml:"musicFilePath"`
+	HttpFilePath  string `toml:"httpFilePath"`
 	MusicFileIp   string `toml:"musicFileIp"`
 }
 

@@ -2,7 +2,12 @@
 appName = "MyMusicPlatform"
 host = "0.0.0.0"
 port = 8000
-musicFilePath = "/static"
+
+# musicFilePath = "/static"
+# 真实的一个服务器文件路径
+musicFilePath = "D:/MyMusicPlatform/test"
+# 访问的服务器的一个相对地址
+httpFilePath ="/test"
 # 文件存储ip地址，一般是本地（后续接入oss接口）
 musicFileIp = "192.168.15.1"
 
@@ -33,10 +38,10 @@ charset =  "utf8mb4"
  key= "MyChat-v1"
 
 [rabbitmqConfig]
-  host= "127.0.0.1"
+  host= "192.168.15.129"
   port= 5672
-  username= "admin"
-  password= ''
-  vhost= "admin"
+  username= "root"
+  password= "123456"
+  vhost= "/"
 
 

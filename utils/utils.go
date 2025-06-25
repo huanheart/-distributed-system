@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"MyChat/config"
 	"crypto/md5"
 	"encoding/hex"
 	"github.com/google/uuid"
@@ -36,4 +37,14 @@ func GenerateUUID() string {
 // 获取文件名
 func GetFilePreName(filename, fileExt string) string {
 	return strings.TrimSuffix(filename, fileExt) // "hello_song"
+}
+
+// file_path是真实路径，我们需要给他变成服务路径
+// 当前是http（后续要在config.GetConfig().MusicFileIp加上http/https）
+func GetHttpPath(file_path string) string {
+	base := config.GetConfig().MusicFilePath // D:/MyMusicPlatform/test
+	full := file_path                        // D:/MyMusicPlatform/test/1.jpg
+	rest := strings.TrimPrefix(full, base)   // -> /1.jpg
+	res := config.GetConfig().MusicFileIp + ":" + strconv.Itoa(config.GetConfig().Port) + config.GetConfig().HttpFilePath + rest
+	return res
 }
