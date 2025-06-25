@@ -21,8 +21,9 @@ type (
 
 	// 下载需要传音乐的uuid，（jwt，这个在user_id中）
 	// 然后返回FileSize,文件，Duration
+	// GET请求需绑定form
 	MusicDownloadRequest struct {
-		FileID string `json:"file_id" binding:"required"`
+		FileID string `form:"file_id" binding:"required"`
 	}
 
 	MusicDownloadResponse struct {
@@ -61,7 +62,7 @@ func MusicDownload(c *gin.Context) {
 	var ok bool
 	req := new(MusicDownloadRequest)
 	res := new(MusicDownloadResponse)
-	if err := c.ShouldBindJSON(req); err != nil {
+	if err := c.ShouldBindQuery(req); err != nil {
 		c.JSON(http.StatusOK, res.CodeOf(code.CodeInvalidParams))
 		return
 	}
