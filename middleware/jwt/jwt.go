@@ -10,23 +10,27 @@ import (
 	"strings"
 )
 
-// 从头中读取jwt
+// 读取jwt
 func Auth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		res := new(controller.Response)
 
-		// 从 Header 中读取 token
+		var token string
 		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+		if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
+			token = strings.TrimPrefix(authHeader, "Bearer ")
+		} else {
+			// 兼容 URL 参数传 token
+			token = c.Query("token")
+		}
+
+		if token == "" {
 			c.JSON(http.StatusOK, res.CodeOf(code.CodeInvalidToken))
 			c.Abort()
 			return
 		}
 
-		// 截取 token 字符串（去掉 Bearer 前缀）
-		token := strings.TrimPrefix(authHeader, "Bearer ")
 		log.Println("token is ", token)
-		// 解析 token
 		claimsId, ok := myjwt.ParseToken(token)
 		if !ok {
 			c.JSON(http.StatusOK, res.CodeOf(code.CodeInvalidToken))

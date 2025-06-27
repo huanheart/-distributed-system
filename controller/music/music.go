@@ -6,9 +6,12 @@ import (
 	"MyChat/model"
 	"MyChat/service/music"
 	"MyChat/utils"
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"io"
 	"log"
 	"net/http"
+	"os"
 )
 
 type (
@@ -29,6 +32,13 @@ type (
 	MusicDownloadResponse struct {
 		controller.Response
 		FilePath string `json:"file_path" binding:"required"`
+	}
+	//播放音乐的请求类
+	MusicStartRequest struct {
+		FileID string `form:"file_id" binding:"required"`
+	}
+	MusicStartResponse struct {
+		controller.Response
 	}
 )
 
@@ -80,4 +90,80 @@ func MusicDownload(c *gin.Context) {
 
 	log.Println("res.FilePath is " + res.FilePath)
 	c.JSON(http.StatusOK, res)
+}
+
+func MusicStart(c *gin.Context) {
+
+	req := new(MusicStartRequest)
+
+	//这个res并不是进行返回的res，而是
+	res := new(MusicStartResponse)
+
+	if err := c.ShouldBindQuery(&req); err != nil {
+		c.JSON(http.StatusOK, res.CodeOf(code.CodeInvalidParams))
+		return
+	}
+
+	userID := c.GetInt64("user_id") // 来自 JWT 中间件
+
+	// 1. 查询数据库获取音乐文件信息
+	musicFile, ok := music.IsExistMusicFile(userID, req.FileID)
+	if !ok {
+		c.JSON(http.StatusOK, res.CodeOf(code.FileNotFind))
+		return
+	}
+
+	filePath := musicFile.FilePath
+	file, err := os.Open(filePath)
+	if err != nil {
+		c.JSON(http.StatusOK, res.CodeOf(code.FileCannotOpen))
+		return
+	}
+	defer file.Close()
+
+	fi, _ := file.Stat()
+	size := fi.Size()
+
+	// 2. 解析 Range 请求
+	rangeHeader := c.GetHeader("Range")
+	if rangeHeader == "" {
+		// 如果不支持 Range，直接返回整段
+		c.Header("Content-Type", "audio/mpeg")
+		c.Header("Content-Length", fmt.Sprintf("%d", size))
+		c.Header("Accept-Ranges", "bytes")
+		http.ServeContent(c.Writer, c.Request, filePath, fi.ModTime(), file)
+		return
+	}
+
+	// Range 格式：bytes=start-end
+	var start, end int64
+	_, err = fmt.Sscanf(rangeHeader, "bytes=%d-%d", &start, &end)
+	if err != nil {
+		// 若未给出 end，默认读到结尾
+		_, err = fmt.Sscanf(rangeHeader, "bytes=%d-", &start)
+		if err != nil {
+			c.JSON(http.StatusOK, res.CodeOf(code.CodeInvalidParams))
+			return
+		}
+		end = size - 1
+	}
+
+	// 校验范围合法
+	if start > end || end >= size {
+		c.JSON(http.StatusOK, res.CodeOf(code.CodeInvalidParams))
+		return
+	}
+
+	// 3. 设置 Range 响应头并返回部分内容
+	length := end - start + 1
+
+	c.Status(http.StatusPartialContent) // 206
+	c.Header("Content-Type", "audio/mpeg")
+	c.Header("Content-Length", fmt.Sprintf("%d", length))
+	c.Header("Accept-Ranges", "bytes")
+	c.Header("Content-Range", fmt.Sprintf("bytes %d-%d/%d", start, end, size))
+
+	// 定位到起始字节
+	file.Seek(start, io.SeekStart)
+	io.CopyN(c.Writer, file, length)
 }
