@@ -96,7 +96,7 @@ func MusicStart(c *gin.Context) {
 
 	req := new(MusicStartRequest)
 
-	//这个res并不是进行返回的res，而是
+	//这个res是用于错误请求进行返回
 	res := new(MusicStartResponse)
 
 	if err := c.ShouldBindQuery(&req); err != nil {

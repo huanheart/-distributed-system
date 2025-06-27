@@ -92,6 +92,12 @@ func MarkMusicFileUploaded(filePath string, value int64) error {
 		Update("is_upload", value).Error
 }
 
+func SetCountDuration(filePath string, value float64) error {
+	return DB.Model(&model.MusicFile{}).
+		Where("file_path = ?", filePath).
+		Update("duration", value).Error
+}
+
 func migration() error {
 	return DB.AutoMigrate(
 		new(model.User),

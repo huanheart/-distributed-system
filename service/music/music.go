@@ -37,6 +37,7 @@ func IsExistMusicFile(user_id int64, file_id string) (*model.MusicFile, bool) {
 }
 
 func MusicUpload(user_id int64, file *multipart.FileHeader) (*model.MusicFile, bool) {
+
 	// 1. 生成 UUID
 	fileID := utils.GenerateUUID()
 
@@ -77,6 +78,9 @@ func MusicUpload(user_id int64, file *multipart.FileHeader) (*model.MusicFile, b
 	//todo:后续弄一层抽象，弄一个抽象父类，对应方法都一样，然后只需要在外层写new 哪一个子类即可 ,代码维护量大大减少
 	data := rabbitmq.GenerateUploadMQParam(music_file.UserID, music_file.UUID, music_file.FilePath)
 	rabbitmq.RMQUpload.Publish(data)
+
+	data = rabbitmq.GenerateCDMQParam(music_file.FilePath)
+	rabbitmq.RMQCountDuration.Publish(data)
 
 	return music_file, true
 }

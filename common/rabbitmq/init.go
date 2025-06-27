@@ -1,8 +1,9 @@
 package rabbitmq
 
 var (
-	RMQUpload       *RabbitMQ
-	RMQRemoteUpload *RabbitMQ
+	RMQUpload        *RabbitMQ
+	RMQRemoteUpload  *RabbitMQ
+	RMQCountDuration *RabbitMQ
 )
 
 func InitRabbitMQ() {
@@ -14,6 +15,9 @@ func InitRabbitMQ() {
 
 	RMQRemoteUpload = NewWorkRabbitMQ("RemoteUpload")
 	go RMQRemoteUpload.Consume(RemoteUpload)
+
+	RMQCountDuration = NewWorkRabbitMQ("CountDuration")
+	go RMQCountDuration.Consume(CountDuration)
 }
 
 // DestroyRabbitMQ 销毁RabbitMQ
