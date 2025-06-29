@@ -44,6 +44,16 @@ type (
 	CaptchaResponse struct {
 		controller.Response
 	}
+
+	LikeRequest struct {
+		FileID string `json:"file_id" binding:"required"`
+	}
+
+	LikeResponse struct {
+		controller.Response
+		LikeCnt    int64 `json:"like_count,omitempty"`
+		LikeStatus int64 `json:"like_status,omitempty"`
+	}
 )
 
 func Login(c *gin.Context) {
@@ -128,5 +138,26 @@ func HandleCaptcha(c *gin.Context) {
 	//匿名字段，其实本身res.Success()调用就是res.Response.Success()
 	//res.Response.Success()
 	res.Success()
+	c.JSON(http.StatusOK, res)
+}
+
+// 登录之后，进行点赞操作
+func Like(c *gin.Context) {
+	req := new(LikeRequest)
+	res := new(LikeResponse)
+	//解析参数
+	if err := c.ShouldBindJSON(req); err != nil {
+		c.JSON(http.StatusOK, res.CodeOf(code.CodeInvalidParams))
+		return
+	}
+	userID := c.GetInt64("user_id") // 从中间件 Set() 中获取
+	//开始给service层进行点赞业务处理
+	LikeCnt, LikeStatus, ok := user.HandleLike(userID, req.FileID)
+	if !ok {
+		c.JSON(http.StatusOK, res.CodeOf(code.CodeServerBusy))
+		return
+	}
+	res.Success()
+	res.LikeStatus, res.LikeCnt = LikeStatus, LikeCnt
 	c.JSON(http.StatusOK, res)
 }

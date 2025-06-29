@@ -59,6 +59,18 @@ type Config struct {
 	Rabbitmq    `toml:"rabbitmqConfig"`
 }
 
+type RedisKeyConfig struct {
+	RedisKeyUserMusicLike string
+	//RedisKeyOfCollect  string
+	RedisKeyMusicLikeCount string
+}
+
+var DefaultRedisKeyConfig = RedisKeyConfig{
+	RedisKeyUserMusicLike: "like:user:%d:music:%s",
+	//RedisKeyOfCollect:  "collect",
+	RedisKeyMusicLikeCount: "like:count:music:%s",
+}
+
 var config *Config
 
 // InitConfig 初始化项目配置

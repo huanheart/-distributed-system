@@ -12,7 +12,7 @@ type UploadMQParam struct {
 	FilePath string `json:"file_path"`
 }
 
-// GenerateLikeMQParam 生成传入 Like MQ 的参数
+// GenerateLikeMQParam 生成传入 upload MQ 的参数
 func GenerateUploadMQParam(user_id int64, file_id, file_path string) []byte {
 	param := UploadMQParam{
 		UserID:   user_id,

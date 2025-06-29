@@ -3,6 +3,7 @@ package mysql
 import (
 	"MyChat/config"
 	"MyChat/model"
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/mysql"
@@ -64,6 +65,25 @@ func GetMusicfile(user_id int64, file_id string) (*model.MusicFile, error) {
 	return musicfile, err
 }
 
+func GetMusicfileByFileId(file_id string) (*model.MusicFile, error) {
+	musicfile := new(model.MusicFile)
+	err := DB.Where("uuid = ?", file_id).First(musicfile).Error
+	return musicfile, err
+}
+
+// 查找对应userid 用户对音乐music_id 的raction行为
+func GetMusicReaction(userID int64, musicUUID string) (*model.MusicReaction, error) {
+	reaction := new(model.MusicReaction)
+	err := DB.Where("user_id = ? AND music_uuid = ?", userID, musicUUID).First(&reaction).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil //没有找到，返回 nil
+		}
+		return nil, err // 其他错误
+	}
+	return reaction, nil // 找到了
+}
+
 func GetUserByEmail(email string) (*model.User, error) {
 	user := new(model.User)
 	err := DB.Where("email = ?", email).First(user).Error
@@ -102,5 +122,6 @@ func migration() error {
 	return DB.AutoMigrate(
 		new(model.User),
 		new(model.MusicFile),
+		new(model.MusicReaction),
 	)
 }

@@ -12,3 +12,9 @@ func RegisterUserRouter(r *gin.RouterGroup) {
 		r.POST("/captcha", user.HandleCaptcha)
 	}
 }
+
+func AfterUserRouter(r *gin.RouterGroup) {
+	{
+		r.POST("/like", user.Like)
+	}
+}
