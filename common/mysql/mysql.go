@@ -84,6 +84,52 @@ func GetMusicReaction(userID int64, musicUUID string) (*model.MusicReaction, err
 	return reaction, nil // 找到了
 }
 
+func InsertMusicReaction(reaction *model.MusicReaction) (*model.MusicReaction, error) {
+	err := DB.Create(reaction).Error
+	return reaction, err
+}
+
+func UpdateFileAction(action int64, userID int64, musicUUID string) (*model.MusicReaction, error) {
+	//先去查找是否含有这个musicUUID,userID的记录
+	reaction, err := GetMusicReaction(userID, musicUUID)
+	if err != nil {
+		return nil, err
+	}
+	//此时说明需要插入一条数据
+	if reaction == nil {
+		return InsertMusicReaction(&model.MusicReaction{
+			UserID:    userID,
+			MusicUUID: musicUUID,
+			Action:    action,
+		})
+	}
+	//否则更新数据
+	reaction.Action = action
+	if err := DB.Save(reaction).Error; err != nil {
+		return nil, err
+	}
+	return reaction, nil
+}
+
+func UpdateLikeCount(LikeCnt int64, musicUUID string) (*model.MusicFile, error) {
+	musicFile := new(model.MusicFile)
+
+	// 查找指定 UUID 的记录
+	err := DB.Where("uuid = ?", musicUUID).First(musicFile).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to find music file: %w", err)
+	}
+
+	// 更新 LikeCount 字段
+	musicFile.LikeCount = LikeCnt
+	err = DB.Save(musicFile).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to update like count: %w", err)
+	}
+
+	return musicFile, nil
+}
+
 func GetUserByEmail(email string) (*model.User, error) {
 	user := new(model.User)
 	err := DB.Where("email = ?", email).First(user).Error

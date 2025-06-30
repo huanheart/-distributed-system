@@ -7,10 +7,7 @@ import (
 	"MyChat/model"
 	"MyChat/utils"
 	"context"
-	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
-	"log"
-	"strconv"
 )
 
 var ctx = context.Background()
@@ -75,101 +72,35 @@ func SendCaptcha(email string) bool {
 	return true
 }
 
+// 最多产生多少次redis和mysql的当前消耗？
+// 4次redis + 2次mysql
+// MQ减少了多少次mysql操作？
+// 2次以上
 func HandleLike(user_id int64, file_id string) (int64, int64, bool) {
 	var LikeCnt int64
 	var LikeStatus int64
-
-	//1：查看redis当前用户对这首音乐的点赞状态,查询是否存在redis中
-	key := myredis.GenerateLikeKey(user_id, file_id)
-	//2:判断redis中是否有这个键值对
-	val, err := myredis.Rdb.Get(ctx, key).Result()
-	//说明有这个键值对，获取它是点赞还是未点赞
-	if err == nil {
-		//将点赞->非点赞 / 非点赞->点赞
-		if ok := myredis.SetLike(ctx, key, val); !ok {
-			return LikeCnt, LikeStatus, false
-		}
-		//获取key值，用于查询当前音乐播放量的总数
-		key = myredis.GenerateMusicCountKey(file_id)
-		_, err := myredis.Rdb.Get(ctx, key).Result()
-		if err == nil {
-			//将对应的值加1或者-1
-			myredis.UpdateLikeByVal(ctx, key, val)
-		} else if err == redis.Nil {
-			//查询mysql的Music_file表，获取该音乐被点赞总数并放入到redis中
-			//  musicfile极大概率都是查找的到的，这里不考虑异常意外的情况
-			musicfile, _ := mysql.GetMusicfileByFileId(file_id)
-			LikeCnt = musicfile.LikeCount
-			//存放到redis中
-			myredis.UpdateLike(ctx, key, LikeCnt+1)
-			// todo:放入到消息队列中，需要更新mysql的字段,这里异步操作（两张表都需要）
-			// todo 2: 将music_file表中的LikeCount进行+1操作
-
-		} else {
-			return LikeCnt, LikeStatus, false
-		}
-		//todo: 1:将music_reaction表中的Action更改为val相反的值
-
-	} else if err == redis.Nil {
-		//说明没有这个键值对，需要从mysql中查询MusicReaction表获取当前用户对这个歌曲的点赞状态，并存入redis
-		reaction, err := mysql.GetMusicReaction(user_id, file_id)
-		if reaction == nil && err == nil {
-			//1：直接将其存放到redis中，此时一定是点赞操作,固然从0->1
-			if ok := myredis.SetLike(ctx, key, "0"); !ok {
-				return LikeCnt, LikeStatus, false
-			}
-			//todo:这里往Reaction表中插入一条数据(即user_id对file_id进行1（点赞操作）
-
-			//然后开始查询数据
-			//获取key值，用于查询当前音乐播放量的总数
-			key = myredis.GenerateMusicCountKey(file_id)
-			_, err := myredis.Rdb.Get(ctx, key).Result()
-			if err == nil {
-				//将对应的值加1或者-1
-				myredis.UpdateLikeByVal(ctx, key, val)
-			} else if err == redis.Nil {
-				//查询mysql的Music_file表，获取该音乐被点赞总数并放入到redis中
-				//  musicfile极大概率都是查找的到的，这里不考虑异常意外的情况
-				musicfile, _ := mysql.GetMusicfileByFileId(file_id)
-				LikeCnt = musicfile.LikeCount
-				//存放到redis中
-				myredis.UpdateLike(ctx, key, LikeCnt+1)
-				// todo:放入到消息队列中，需要更新mysql的LikeCount字段,这里异步操作
-			} else {
-				return LikeCnt, LikeStatus, false
-			}
-
-		} else if reaction != nil {
-			//直接将其值缓存到redis中,1->0 0->1
-			myredis.SetLike(ctx, key, strconv.Itoa(int(reaction.Action)))
-			//todo:更新reaction表中reaction.Action字段，变成相反的值即可
-			//然后开始查询数量
-			key = myredis.GenerateMusicCountKey(file_id)
-			_, err := myredis.Rdb.Get(ctx, key).Result()
-			if err == nil {
-				//将对应的值加1或者-1
-				myredis.UpdateLikeByVal(ctx, key, val)
-			} else if err == redis.Nil {
-				//查询mysql的Music_file表，获取该音乐被点赞总数并放入到redis中
-				//  musicfile极大概率都是查找的到的，这里不考虑异常意外的情况
-				musicfile, _ := mysql.GetMusicfileByFileId(file_id)
-				LikeCnt = musicfile.LikeCount
-				//存放到redis中
-				myredis.UpdateLike(ctx, key, LikeCnt+1)
-				// todo:放入到消息队列中，需要更新mysql的LikeCount字段,这里异步操作
-			} else {
-				return LikeCnt, LikeStatus, false
-			}
-
-		} else {
-			log.Println(err.Error())
-			return LikeCnt, LikeStatus, false
-		}
-
-	} else {
-		log.Println("redis Get操作失败 " + err.Error())
-		return LikeCnt, LikeStatus, false
+	var ok bool
+	// 1：查询一个用户对这首歌的状态记录，先查询redis，如果redis中没有，那么就加载mysql数据到redis中，如果mysql中也没有
+	// 说明此时一定是未点赞情况,那么加载对应未点赞状态到redis中
+	if LikeStatus, ok = user.GetUserStatusOnFile(user_id, file_id); !ok {
+		return 0, 0, false
 	}
+	// 2：更新redis状态为LikeStatus相反的状态，并开启消息队列，将其mysql中对应reaction表中（插入或更新一条数据，更新现在是点赞还是取消点赞状态）
+	user.ChangeOppositeState(user_id, file_id, LikeStatus)
 
+	// 3：查看当前这首歌被点赞的总记录，先查询redis中是否含有，如果没有，mysql直接加载到redis中（此时mysql一定会有，因为歌曲是一定有的）
+	LikeCnt, _ = user.GetFileLike(file_id)
+
+	//4:更新redis当前点赞的总记录，并开启消息队列，将mysql中music_file表中的总点赞数进行+1/-1
+	user.ChangeOppositeLikeCnt(LikeStatus, LikeCnt, file_id)
+
+	// 5：最后还要将当前状态进行反转,返回当前总点赞数以及当前用户对这个音乐的点赞状态
+	if LikeStatus == 0 {
+		LikeStatus = 1
+		LikeCnt = LikeCnt + 1
+	} else {
+		LikeStatus = 0
+		LikeCnt = LikeCnt - 1
+	}
 	return LikeCnt, LikeStatus, true
 }

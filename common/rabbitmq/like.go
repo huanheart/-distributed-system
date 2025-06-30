@@ -1,6 +1,7 @@
 package rabbitmq
 
 import (
+	"MyChat/common/mysql"
 	"encoding/json"
 	"github.com/streadway/amqp"
 )
@@ -35,27 +36,13 @@ func UpdateLikeCount(msg *amqp.Delivery) error {
 	return nil
 }
 
-// 这里还需要一个更新reaction表的表
-func UpdateAction(msg *amqp.Delivery) error {
+func UpdateFileAction(msg *amqp.Delivery) error {
 	var param LikeMQParam
 	err := json.Unmarshal(msg.Body, &param)
 	if err != nil {
 		return err
 	}
-	//todo:这里需要先查一下是否有这个表，决定插入还是更新操作
-	//todo:或者直接将插入和更新分开(我更倾向这种，因为外部已经判断了）
-	mysql.UpdateAction(param.Action, param.UserID, param.MusicUUID)
-	return nil
-}
-
-func InsertAction(msg *amqp.Delivery) error {
-	var param LikeMQParam
-	err := json.Unmarshal(msg.Body, &param)
-	if err != nil {
-		return err
-	}
-	//todo:这里需要先查一下是否有这个表，决定插入还是更新操作
-	//todo:或者直接将插入和更新分开(我更倾向这种，因为外部已经判断了）
-	mysql.InsertAction(param.Action, param.UserID, param.MusicUUID)
+	//更新music_reaction的表
+	mysql.UpdateFileAction(param.Action, param.UserID, param.MusicUUID)
 	return nil
 }

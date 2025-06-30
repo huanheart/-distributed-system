@@ -1,9 +1,11 @@
 package rabbitmq
 
 var (
-	RMQUpload        *RabbitMQ
-	RMQRemoteUpload  *RabbitMQ
-	RMQCountDuration *RabbitMQ
+	RMQUpload          *RabbitMQ
+	RMQRemoteUpload    *RabbitMQ
+	RMQCountDuration   *RabbitMQ
+	RMQUpdateLikeCount *RabbitMQ
+	RMQUpdateAction    *RabbitMQ
 )
 
 func InitRabbitMQ() {
@@ -18,6 +20,12 @@ func InitRabbitMQ() {
 
 	RMQCountDuration = NewWorkRabbitMQ("CountDuration")
 	go RMQCountDuration.Consume(CountDuration)
+
+	RMQUpdateLikeCount = NewWorkRabbitMQ("UpdateLikeCount")
+	go RMQUpdateLikeCount.Consume(UpdateLikeCount)
+
+	RMQUpdateAction = NewWorkRabbitMQ("UpdateAction")
+	go RMQUpdateAction.Consume(UpdateFileAction)
 }
 
 // DestroyRabbitMQ 销毁RabbitMQ
@@ -25,4 +33,7 @@ func InitRabbitMQ() {
 func DestroyRabbitMQ() {
 	RMQUpload.Destroy()
 	RMQRemoteUpload.Destroy()
+	RMQCountDuration.Destroy()
+	RMQUpdateLikeCount.Destroy()
+	RMQUpdateAction.Destroy()
 }
