@@ -18,3 +18,7 @@ func GenerateMusicCountKey(file_id string) string {
 func GenerateMusicLikeIncrementKey() string {
 	return fmt.Sprintf(config.DefaultRedisKeyConfig.RedisKeyMusicLikeIncrement)
 }
+
+func GenerateMusicLikeHotSortKey() string {
+	return fmt.Sprintf(config.DefaultRedisKeyConfig.RedisKeyMusicSort)
+}

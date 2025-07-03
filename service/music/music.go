@@ -38,11 +38,10 @@ func IsExistMusicFile(user_id int64, file_id string) (*model.MusicFile, bool) {
 }
 
 func GetTopInformation(cnt int64) ([]controller.MusicDetail, bool) {
-	var res []controller.MusicDetail
-
+	if ok := music.LoadTopDataToRedis(cnt); !ok {
+		return nil, false
+	}
 	return music.GetTopInformation(cnt)
-
-	return res, true
 }
 
 func MusicUpload(user_id int64, file *multipart.FileHeader) (*model.MusicFile, bool) {

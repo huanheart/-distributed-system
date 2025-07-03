@@ -164,6 +164,27 @@ func SetCountDuration(filePath string, value float64) error {
 		Update("duration", value).Error
 }
 
+// 获取排序后的前N个元素
+func GetTopNFromMySQL(n int64) ([]*model.MusicFile, error) {
+	var topMusicFiles []*model.MusicFile
+	// 从 MusicFile 表中按 LikeCount 降序排序，并限制返回的条数为 n
+	err := DB.Model(&model.MusicFile{}).Order("like_count desc").Limit(int(n)).Find(&topMusicFiles).Error
+	if err != nil {
+		return nil, err // 查询失败，返回错误
+	}
+	return topMusicFiles, nil // 返回查询结果
+}
+
+func GetTopAllFromMysql() ([]*model.MusicFile, error) {
+	var topMusicFiles []*model.MusicFile
+	// 从 MusicFile 表中按 LikeCount 降序排序，并限制返回的条数为 n
+	err := DB.Model(&model.MusicFile{}).Order("like_count desc").Find(&topMusicFiles).Error
+	if err != nil {
+		return nil, err // 查询失败，返回错误
+	}
+	return topMusicFiles, nil // 返回查询结果
+}
+
 func migration() error {
 	return DB.AutoMigrate(
 		new(model.User),
