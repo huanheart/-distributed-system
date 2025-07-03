@@ -14,3 +14,7 @@ func GenerateLikeKey(user_id int64, file_id string) string {
 func GenerateMusicCountKey(file_id string) string {
 	return fmt.Sprintf(config.DefaultRedisKeyConfig.RedisKeyMusicLikeCount, file_id)
 }
+
+func GenerateMusicLikeIncrementKey() string {
+	return fmt.Sprintf(config.DefaultRedisKeyConfig.RedisKeyMusicLikeIncrement)
+}

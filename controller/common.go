@@ -2,6 +2,11 @@ package controller
 
 import "MyChat/common/code"
 
+type MusicDetail struct {
+	FilePath  string `json:"file_path" binding:"required"`
+	LikeCount int64  `json:"like_count"binding:"required"`
+}
+
 type Response struct {
 	StatusCode code.Code `json:"status_code"`
 	StatusMsg  string    `json:"status_msg,omitempty"`

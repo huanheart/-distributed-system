@@ -62,13 +62,18 @@ type Config struct {
 type RedisKeyConfig struct {
 	RedisKeyUserMusicLike string
 	//RedisKeyOfCollect  string
-	RedisKeyMusicLikeCount string
+	RedisKeyMusicLikeCount     string
+	RedisKeyMusicLikeIncrement string
+	RedisRankingsNum           int64
 }
 
 var DefaultRedisKeyConfig = RedisKeyConfig{
 	RedisKeyUserMusicLike: "like:user:%d:music:%s",
 	//RedisKeyOfCollect:  "collect",
 	RedisKeyMusicLikeCount: "like:count:music:%s",
+	//维护排行版那个点赞增量的key
+	RedisKeyMusicLikeIncrement: "like:increment:music:%s",
+	RedisRankingsNum:           5,
 }
 
 var config *Config

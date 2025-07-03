@@ -4,6 +4,7 @@ import (
 	"MyChat/common/mysql"
 	"MyChat/common/rabbitmq"
 	"MyChat/config"
+	"MyChat/controller"
 	"MyChat/dao/music"
 	"MyChat/model"
 	"MyChat/utils"
@@ -34,6 +35,14 @@ func IsExistMusicFile(user_id int64, file_id string) (*model.MusicFile, bool) {
 	}
 
 	return musicfile, true
+}
+
+func GetTopInformation(cnt int64) ([]controller.MusicDetail, bool) {
+	var res []controller.MusicDetail
+
+	return music.GetTopInformation(cnt)
+
+	return res, true
 }
 
 func MusicUpload(user_id int64, file *multipart.FileHeader) (*model.MusicFile, bool) {

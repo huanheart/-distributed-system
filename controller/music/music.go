@@ -2,6 +2,7 @@ package music
 
 import (
 	"MyChat/common/code"
+	"MyChat/config"
 	"MyChat/controller"
 	"MyChat/model"
 	"MyChat/service/music"
@@ -39,6 +40,13 @@ type (
 	}
 	MusicStartResponse struct {
 		controller.Response
+	}
+	//关于音乐排行榜的响应类，不需要请求类
+	//1：音乐文件图片路径  2：点赞数量
+
+	MusicRankingsResponse struct {
+		controller.Response
+		MusicList [] controller.MusicDetail `json:"music_list"` // 返回的音乐信息列表
 	}
 )
 
@@ -89,6 +97,22 @@ func MusicDownload(c *gin.Context) {
 	res.FilePath = utils.GetHttpPath(musicfile.FilePath)
 
 	log.Println("res.FilePath is " + res.FilePath)
+	c.JSON(http.StatusOK, res)
+}
+
+// 获取音乐排行榜数据，Get请求返回对应的
+func Rankings(c *gin.Context) {
+	var file_paths []controller.MusicDetail
+	var ok bool
+	res := new(MusicRankingsResponse)
+	//获取点赞数前五的音乐 的图片文件路径，点赞数 ,默认获取RedisRankingsNum个
+	if file_paths, ok = music.GetTopInformation(config.DefaultRedisKeyConfig.RedisRankingsNum);!ok{
+		c.JSON(http.StatusOK, res.CodeOf(code.CodeServerBusy))
+		return
+	}
+
+	res.MusicList=file_paths
+	res.Success()
 	c.JSON(http.StatusOK, res)
 }
 
