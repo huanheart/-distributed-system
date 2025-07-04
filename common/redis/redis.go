@@ -30,7 +30,7 @@ func Init() {
 	//定时协程的封装,调用UpdateRedisCache
 	//用于定时更新redis中的缓存的函数(将key中所有的增量全部更新到zset与info_hash中）
 	go func() {
-		ticker := time.NewTicker(1 * time.Minute) // 每小时
+		ticker := time.NewTicker(1 * time.Minute) // 每分钟更新，todo:更改成每小时更新
 		defer ticker.Stop()
 		for {
 			select {
@@ -88,6 +88,10 @@ func UpdateRedisCache() {
 	for uuid, incrStr := range increments {
 		incr, _ := strconv.ParseInt(incrStr, 10, 64)
 		if incr == 0 {
+			_, err = Rdb.HDel(ctx, hashKey, uuid).Result()
+			if err != nil {
+				log.Printf("UpdateRedisCache - HDel failed for %s: %v\n", uuid, err)
+			}
 			continue // 不更新
 		}
 		//更新 ZSet 中的分数
