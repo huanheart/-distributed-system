@@ -6,9 +6,9 @@ import (
 	"MyChat/config"
 	"MyChat/controller"
 	"MyChat/model"
+	"MyChat/utils"
 	"MyChat/utils/file"
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/go-redis/redis/v8"
 	"log"
@@ -40,7 +40,7 @@ func UploadMusicFile(uuid, music_name, file_path string, user_id, file_size int6
 }
 
 // 如果没有对应的键值对，那么就直接从mysql中一次性加载所有数据到redis中(这里默认数据库是肯定存在数据的）
-func LoadTopDataToRedis(cnt int64) bool {
+func LoadTopDataToRedis() bool {
 	key := myredis.GenerateMusicLikeHotSortKey()
 	//1:查找key值对应的zset是否存在
 	zsetResults, _ := myredis.Rdb.ZRevRangeWithScores(ctx, key, 0, 0).Result()
@@ -55,17 +55,21 @@ func LoadTopDataToRedis(cnt int64) bool {
 		//遍历musicFiles并进行缓存操作
 		var zMembers []*redis.Z
 		for _, music := range musicFiles {
-			memberData := map[string]interface{}{
-				"music_uuid": music.UUID,
-				"file_path":  music.FilePath,
-				"music_name": music.MusicName,
-			}
-			memberJSON, _ := json.Marshal(memberData)
-
+			//存放到zset中
 			zMembers = append(zMembers, &redis.Z{
 				Score:  float64(music.LikeCount),
-				Member: memberJSON,
+				Member: music.UUID,
 			})
+			//存放到infohash中
+			info_key := myredis.GenerateMusicJsonHashKey(music.UUID)
+			_, err := myredis.Rdb.HMSet(ctx, info_key, map[string]interface{}{
+				"file_path":  music.FilePath,
+				"music_name": music.MusicName,
+				"like_count": music.LikeCount,
+			}).Result()
+			if err != nil {
+				log.Println("HMSet failed for", music.UUID, ":", err)
+			}
 		}
 		_, err = myredis.Rdb.ZAdd(ctx, key, zMembers...).Result()
 		if err != nil {
@@ -79,14 +83,23 @@ func LoadTopDataToRedis(cnt int64) bool {
 func GetTopInformation(cnt int64) ([]controller.MusicDetail, bool) {
 	var res []controller.MusicDetail
 	key := myredis.GenerateMusicLikeHotSortKey()
-	//3:从redis中读取对应的信息，并返回
+	//1. 获取 ZSet 中前 cnt 个 uuid（按点赞数排序）
 	zsetResults, _ := myredis.Rdb.ZRevRangeWithScores(ctx, key, 0, cnt-1).Result()
+	//2:遍历获取对应的哈希表，并取出数据放入到res中
 	for _, z := range zsetResults {
+		uuid := z.Member.(string)
+		info_key := myredis.GenerateMusicJsonHashKey(uuid)
+
+		info, err := myredis.Rdb.HGetAll(ctx, info_key).Result()
+		if err != nil {
+			log.Println("HGetAll error for uuid", uuid, ":", err)
+			return nil, false
+		}
+		if len(info) == 0 {
+			continue
+		}
 		var detail controller.MusicDetail
-		temp := make(map[string]interface{})
-		_ = json.Unmarshal([]byte(z.Member.(string)), &temp)
-		//todo:这里需要更改成http的请求路径：
-		detail.FilePath = temp["file_path"].(string)
+		detail.FilePath = utils.GetHttpPath(info["file_path"])
 		detail.LikeCount = int64(z.Score) // 分数就是点赞数
 		res = append(res, detail)
 	}

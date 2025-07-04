@@ -22,7 +22,7 @@ func initConn() {
 	var err error
 	conn, err = amqp.Dial(mqUrl)
 	if err != nil {
-		panic(err.Error())
+		log.Fatalf("RabbitMQ connection failed: %v", err) // 输出错误并退出程序
 	}
 }
 

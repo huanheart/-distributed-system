@@ -63,19 +63,26 @@ type RedisKeyConfig struct {
 	RedisKeyUserMusicLike string
 	//RedisKeyOfCollect  string
 	RedisKeyMusicLikeCount string
-	//增量的key
+	//1，2，3都是有关排行榜的key
+	//1：增量哈希表的key
 	RedisKeyMusicLikeIncrement string
-	RedisKeyMusicSort          string
-	RedisRankingsNum           int64
+	//2：排行榜zset的key（score->like_cnt,member->music_uuid)
+	RedisKeyMusicSort string
+	//3：存放具体数据哈希表的key ->哈希表->每一个元素是key,value结构 ，key为music_uuid，value为具体数据json)
+	//因为考虑到增量的时候不能直接通过json快速查找到member，member是一个uuid的时候，才能通过增量哈希表维护的uuid快速找到
+	//zset中的member，从而快速进行操作，那么其余数据只能维护在另外一个哈希结构中
+	RedisKeyJsonData string
+	RedisRankingsNum int64
 }
 
 var DefaultRedisKeyConfig = RedisKeyConfig{
 	RedisKeyUserMusicLike: "like:user:%d:music:%s",
 	//RedisKeyOfCollect:  "collect",
 	RedisKeyMusicLikeCount: "like:count:music:%s",
-	//维护排行版那个点赞增量的key
-	RedisKeyMusicLikeIncrement: "like:increment:music:%s",
-	RedisKeyMusicSort:          "like:hot_file",
+	//维护排行版那个点赞增量集合的那个key（这个集合用于存放一个哈希，每一个哈希元素是音乐uuid与点赞增量数）
+	RedisKeyMusicLikeIncrement: "like:increment:music",
+	RedisKeyMusicSort:          "like:hot_file:zset",
+	RedisKeyJsonData:           "like:hot_file:jsonhash:%s",
 	RedisRankingsNum:           5,
 }
 

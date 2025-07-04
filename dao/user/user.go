@@ -133,18 +133,22 @@ func GetFileLike(file_id string) (int64, bool) {
 	return 0, false
 }
 
-// 4:更新redis当前点赞的总记录，并开启消息队列，将mysql中music_file表中的总点赞数进行+1/-1
+// 4:更新redis当前点赞的总记录，并开启消息队列，将mysql中music_file表中的总点赞数进行+1/-1，并更新排行榜的增量记录
 func ChangeOppositeLikeCnt(status int64, LikeCnt int64, file_id string) bool {
 	//根据LikeCnt做相反的操作，假设当前LikeStatus是未点赞状态，那么需要将redis中LikeCnt+1，反之
 	key := myredis.GenerateMusicCountKey(file_id)
 	if status == 0 {
 		myredis.Rdb.Set(ctx, key, LikeCnt+1, 0)
+		//更新增量记录
+		myredis.AddOneLikeIncrement(file_id)
 		//放入消息队列中，更新mysql状态为LikeCnt+1
 		data := rabbitmq.GenerateLikeMQParam(0, 0, LikeCnt+1, file_id)
 		rabbitmq.RMQUpdateLikeCount.Publish(data)
 		return true
 	}
 	myredis.Rdb.Set(ctx, key, LikeCnt-1, 0)
+	//更新增量记录
+	myredis.SubOneLikeIncrement(file_id)
 	//放入消息队列中，更新mysql状态为LikeCnt-1
 	data := rabbitmq.GenerateLikeMQParam(0, 0, LikeCnt-1, file_id)
 	rabbitmq.RMQUpdateLikeCount.Publish(data)

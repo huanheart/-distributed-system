@@ -22,3 +22,7 @@ func GenerateMusicLikeIncrementKey() string {
 func GenerateMusicLikeHotSortKey() string {
 	return fmt.Sprintf(config.DefaultRedisKeyConfig.RedisKeyMusicSort)
 }
+
+func GenerateMusicJsonHashKey(file_id string) string {
+	return fmt.Sprintf(config.DefaultRedisKeyConfig.RedisKeyJsonData, file_id)
+}

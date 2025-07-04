@@ -38,7 +38,7 @@ func IsExistMusicFile(user_id int64, file_id string) (*model.MusicFile, bool) {
 }
 
 func GetTopInformation(cnt int64) ([]controller.MusicDetail, bool) {
-	if ok := music.LoadTopDataToRedis(cnt); !ok {
+	if ok := music.LoadTopDataToRedis(); !ok {
 		return nil, false
 	}
 	return music.GetTopInformation(cnt)
