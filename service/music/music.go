@@ -44,6 +44,12 @@ func GetTopInformation(cnt int64) ([]controller.MusicDetail, bool) {
 	return music.GetTopInformation(cnt)
 }
 
+// 需要从数据库中查找 id > 某个值 的前 cnt 条数据
+// 不可能将全部数据都存放到redis zset中维护，成本太高，固然直接查询mysql
+func GetMusicFilesAfterID(id int64, cnt int64) ([]controller.MusicInfo, bool) {
+	return music.GetMusicFilesAfterID(id, cnt)
+}
+
 func MusicUpload(user_id int64, file *multipart.FileHeader) (*model.MusicFile, bool) {
 
 	// 1. 生成 UUID

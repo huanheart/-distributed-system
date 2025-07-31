@@ -34,6 +34,16 @@ type (
 		controller.Response
 		FilePath string `json:"file_path" binding:"required"`
 	}
+	MusicFileInfoRequest struct {
+		Id  int64 `json:"id" binding:"required"`
+		Cnt int64 `json:"cnt" binding:"required"`
+	}
+	//用于初始化获取现有文件信息的响应类
+	MusicFileInfoResponse struct {
+		controller.Response
+		MusicInfoList []controller.MusicInfo `json:"music_info_list"`
+	}
+
 	//播放音乐的请求类
 	MusicStartRequest struct {
 		FileID string `form:"file_id" binding:"required"`
@@ -46,7 +56,7 @@ type (
 
 	MusicRankingsResponse struct {
 		controller.Response
-		MusicList [] controller.MusicDetail `json:"music_list"` // 返回的音乐信息列表
+		MusicList []controller.MusicDetail `json:"music_list"` // 返回的音乐信息列表
 	}
 )
 
@@ -100,18 +110,43 @@ func MusicDownload(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
+func MusicInfo(c *gin.Context) {
+	var file_paths []controller.MusicInfo
+	var ok bool
+	req := new(MusicFileInfoRequest)
+	res := new(MusicFileInfoResponse)
+	if err := c.ShouldBindQuery(req); err != nil {
+		c.JSON(http.StatusOK, res.CodeOf(code.CodeInvalidParams))
+		return
+	}
+	//获取数据库中大于当前Id的前Cnt的行，并将对应相关数据进行返回
+	if file_paths, ok = music.GetMusicFilesAfterID(req.Id, req.Cnt); !ok {
+		c.JSON(http.StatusOK, res.CodeOf(code.CodeServerBusy))
+		return
+	}
+	//遍历当前这个file_paths中的FilePath字段，更新为http路径
+	for i := range file_paths {
+		file_paths[i].FilePath = utils.GetHttpPath(file_paths[i].FilePath)
+	}
+
+	res.MusicInfoList = file_paths
+	//成功标志
+	res.Success()
+	c.JSON(http.StatusOK, res)
+}
+
 // 获取音乐排行榜数据，Get请求返回对应的
 func Rankings(c *gin.Context) {
 	var file_paths []controller.MusicDetail
 	var ok bool
 	res := new(MusicRankingsResponse)
 	//获取点赞数前五的音乐 的图片文件路径，点赞数 ,默认获取RedisRankingsNum个
-	if file_paths, ok = music.GetTopInformation(config.DefaultRedisKeyConfig.RedisRankingsNum);!ok{
+	if file_paths, ok = music.GetTopInformation(config.DefaultRedisKeyConfig.RedisRankingsNum); !ok {
 		c.JSON(http.StatusOK, res.CodeOf(code.CodeServerBusy))
 		return
 	}
 
-	res.MusicList=file_paths
+	res.MusicList = file_paths
 	res.Success()
 	c.JSON(http.StatusOK, res)
 }

@@ -105,3 +105,26 @@ func GetTopInformation(cnt int64) ([]controller.MusicDetail, bool) {
 	}
 	return res, true
 }
+
+func GetMusicFilesAfterID(id int64, cnt int64) ([]controller.MusicInfo, bool) {
+	var res []controller.MusicInfo
+	musicFiles, err := mysql.GetMusicFilesAfterID(id, cnt)
+	if err != nil {
+		fmt.Println("GetMusicFilesAfterID error! :" + err.Error())
+		return nil, false
+	}
+	//将这个信息转化成所需要的内容
+	for _, mf := range musicFiles {
+		info := controller.MusicInfo{
+			UUID:      mf.UUID,
+			UserID:    mf.UserID,
+			MusicName: mf.MusicName,
+			FilePath:  mf.FilePath,
+			LikeCount: mf.LikeCount,
+			FileSize:  mf.FileSize,
+			Duration:  mf.Duration,
+		}
+		res = append(res, info)
+	}
+	return res, true
+}

@@ -185,6 +185,21 @@ func GetTopAllFromMysql() ([]*model.MusicFile, error) {
 	return topMusicFiles, nil // 返回查询结果
 }
 
+func GetMusicFilesAfterID(id int64, cnt int64) ([]*model.MusicFile, error) {
+	var musicFiles []*model.MusicFile
+
+	err := DB.Model(&model.MusicFile{}).
+		Where("id > ?", id).
+		Order("id ASC").
+		Limit(int(cnt)).
+		Find(&musicFiles).Error
+
+	if err != nil {
+		return nil, err
+	}
+	return musicFiles, nil
+}
+
 func migration() error {
 	return DB.AutoMigrate(
 		new(model.User),
