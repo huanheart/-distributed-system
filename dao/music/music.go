@@ -116,6 +116,7 @@ func GetMusicFilesAfterID(id int64, cnt int64) ([]controller.MusicInfo, bool) {
 	//将这个信息转化成所需要的内容
 	for _, mf := range musicFiles {
 		info := controller.MusicInfo{
+			ID:        mf.ID,
 			UUID:      mf.UUID,
 			UserID:    mf.UserID,
 			MusicName: mf.MusicName,

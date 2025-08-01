@@ -8,6 +8,7 @@ type MusicDetail struct {
 }
 
 type MusicInfo struct {
+	ID        int64   `json:"id" binding:"required"`
 	UUID      string  `json:"uuid" binding:"required"`
 	UserID    int64   `json:"user_id" binding:"required"`
 	MusicName string  `json:"music_name" binding:"required"`
