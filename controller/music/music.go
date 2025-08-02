@@ -34,10 +34,17 @@ type (
 		controller.Response
 		FilePath string `json:"file_path" binding:"required"`
 	}
+
+	//id若是为0，那么则会被gin框架认为是没有传参，固然使用指针
+	//MusicFileInfoRequest struct {
+	//	Id  int64 `form:"id" binding:"required"`
+	//	Cnt int64 `form:"cnt" binding:"required"`
+	//}
 	MusicFileInfoRequest struct {
-		Id  int64 `json:"id" binding:"required"`
-		Cnt int64 `json:"cnt" binding:"required"`
+		Id  *int64 `form:"id" binding:"required"`
+		Cnt *int64 `form:"cnt" binding:"required"`
 	}
+
 	//用于初始化获取现有文件信息的响应类
 	MusicFileInfoResponse struct {
 		controller.Response
@@ -115,12 +122,15 @@ func MusicInfo(c *gin.Context) {
 	var ok bool
 	req := new(MusicFileInfoRequest)
 	res := new(MusicFileInfoResponse)
+
 	if err := c.ShouldBindQuery(req); err != nil {
+		fmt.Println("Bind error:", err.Error()) // 打印具体错误
 		c.JSON(http.StatusOK, res.CodeOf(code.CodeInvalidParams))
 		return
 	}
+
 	//获取数据库中大于当前Id的前Cnt的行，并将对应相关数据进行返回
-	if file_paths, ok = music.GetMusicFilesAfterID(req.Id, req.Cnt); !ok {
+	if file_paths, ok = music.GetMusicFilesAfterID(*req.Id, *req.Cnt); !ok {
 		c.JSON(http.StatusOK, res.CodeOf(code.CodeServerBusy))
 		return
 	}
