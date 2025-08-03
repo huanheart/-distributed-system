@@ -200,6 +200,21 @@ func GetMusicFilesAfterID(id int64, cnt int64) ([]*model.MusicFile, error) {
 	return musicFiles, nil
 }
 
+// 批量查询当前userid对应file_ids的信息
+func GetUserMusicReactions(userID int64, fileIDs []string) ([]*model.MusicReaction, error) {
+	var reactions []*model.MusicReaction
+
+	err := DB.Model(&model.MusicReaction{}).
+		Where("user_id = ? AND music_uuid IN ? AND action IN ?", userID, fileIDs, []int{0, 1}).
+		Find(&reactions).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return reactions, nil
+}
+
 func migration() error {
 	return DB.AutoMigrate(
 		new(model.User),

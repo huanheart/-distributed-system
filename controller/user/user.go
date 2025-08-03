@@ -54,6 +54,18 @@ type (
 		LikeCnt    int64 `json:"like_count,omitempty"`
 		LikeStatus int64 `json:"like_status,omitempty"`
 	}
+	//用于查询某个用户给这些uuid下的哪些做了点赞操作
+	//不能单纯用userid查询，这里一定要传一些uuid
+	//我们来考虑一个问题：如果传入userid,则需要返回当前userid对应所有点赞的uuid，然后再和客户端进行比对
+	//那么当用户点赞的音乐数量过多了，你一次返回这么多数据给客户端比对合理吗？不太合理
+	//固然考虑到客户端是懒加载数据的，看它需要哪些uuid再返回相应userid对应uuid的状态信息了，而不是直接传userid给它所有的uuid
+	LikeInfosRequest struct {
+		FileIDs []string `json:"file_ids" binding:"required"`
+	}
+	LikeInfosResponse struct {
+		controller.Response
+		FileIDs []string `json:"file_ids,omitempty"`
+	}
 )
 
 func Login(c *gin.Context) {
@@ -138,6 +150,26 @@ func HandleCaptcha(c *gin.Context) {
 	//匿名字段，其实本身res.Success()调用就是res.Response.Success()
 	//res.Response.Success()
 	res.Success()
+	c.JSON(http.StatusOK, res)
+}
+
+// 查询哪些uuid被当前user_id点赞了
+func QueryLikeInfos(c *gin.Context) {
+	req := new(LikeInfosRequest)
+	res := new(LikeInfosResponse)
+	//解析参数
+	if err := c.ShouldBindJSON(req); err != nil {
+		c.JSON(http.StatusOK, res.CodeOf(code.CodeInvalidParams))
+		return
+	}
+	userID := c.GetInt64("user_id") // 从中间件 Set() 中获取
+	BackFileIDs, ok := user.QueryLikeInfos(userID, req.FileIDs)
+	if !ok {
+		c.JSON(http.StatusOK, res.CodeOf(code.CodeServerBusy))
+		return
+	}
+	res.Success()
+	res.FileIDs = BackFileIDs
 	c.JSON(http.StatusOK, res)
 }
 

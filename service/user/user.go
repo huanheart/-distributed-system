@@ -7,6 +7,7 @@ import (
 	"MyChat/model"
 	"MyChat/utils"
 	"context"
+	"fmt"
 	"gorm.io/gorm"
 )
 
@@ -70,6 +71,26 @@ func SendCaptcha(email string) bool {
 	}
 
 	return true
+}
+
+func QueryLikeInfos(user_id int64, FileIDs []string) ([]string, bool) {
+	var res []string
+	var list []string
+	//1：批量查询redis
+	//命中的数据查询actions是否为1，如果为1放入到res中
+	//未命中的数据放入到list列表中，后续查询mysql
+	if err := user.QueryRedisLikeInfos(user_id, FileIDs, &res, &list); err != nil {
+		fmt.Println("redis QueryLikeInfos error " + err.Error())
+		return nil, false
+	}
+	//2:若list不为空，查询mysql
+	if len(list) > 0 {
+		if err := user.QueryMysqlLikeInfosAndCache(user_id, FileIDs, &res, list); err != nil {
+			fmt.Println("mysql QueryLikeInfos error " + err.Error())
+			return nil, false
+		}
+	}
+	return res, true
 }
 
 // 最多产生多少次redis和mysql的当前消耗？

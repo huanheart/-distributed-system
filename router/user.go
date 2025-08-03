@@ -16,5 +16,6 @@ func RegisterUserRouter(r *gin.RouterGroup) {
 func AfterUserRouter(r *gin.RouterGroup) {
 	{
 		r.POST("/like", user.Like)
+		r.POST("/query_like_infos", user.QueryLikeInfos)
 	}
 }

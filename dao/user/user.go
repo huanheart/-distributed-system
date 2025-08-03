@@ -100,7 +100,7 @@ func ChangeOppositeState(user_id int64, file_id string, status int64) bool {
 		rabbitmq.RMQUpdateAction.Publish(data)
 		return true
 	}
-	//未点赞->点赞
+	//点赞->未点赞
 	myredis.Rdb.Set(ctx, key, 0, 0)
 	//消息队列更新mysql
 	//需要将action表改成未点赞状态,这里不关心Likecnt
@@ -153,4 +153,56 @@ func ChangeOppositeLikeCnt(status int64, LikeCnt int64, file_id string) bool {
 	data := rabbitmq.GenerateLikeMQParam(0, 0, LikeCnt-1, file_id)
 	rabbitmq.RMQUpdateLikeCount.Publish(data)
 	return true
+}
+
+// QueryRedisLikeInfos 从 Redis 批量查询 user 对多个 fileID 的点赞状态
+// 命中且值为 "1" 的 fileID 放入 res
+// Redis 未命中的 fileID 放入 list
+func QueryRedisLikeInfos(userID int64, fileIDs []string, res *[]string, list *[]string) error {
+	var redisKeys []string
+	for _, fid := range fileIDs {
+		key := myredis.GenerateLikeKey(userID, fid)
+		redisKeys = append(redisKeys, key)
+	}
+
+	values, err := myredis.Rdb.MGet(ctx, redisKeys...).Result()
+	if err != nil {
+		return err
+	}
+
+	for i, val := range values {
+		fid := fileIDs[i]
+		if val == nil {
+			*list = append(*list, fid) // 未命中
+		} else if strVal, ok := val.(string); ok && strVal == "1" {
+			*res = append(*res, fid) // 命中且为点赞
+		}
+	}
+	return nil
+}
+
+// 批量一次性查询mysql，并对这些未缓存的数据进行缓存操作
+func QueryMysqlLikeInfosAndCache(userID int64, fileIDs []string, res *[]string, list []string) error {
+
+	if len(list) == 0 {
+		return nil // 没有需要查询的UUID，直接返回
+	}
+	reactions, err := mysql.GetUserMusicReactions(userID, list)
+	if err != nil {
+		return err
+	}
+
+	for _, r := range reactions {
+		//考虑到后续可能Action不止0和1，这边先做对应判断处理
+		if r.Action == 0 || r.Action == 1 {
+			//1：将未缓存的数据放入到redis中进行缓存
+			key := myredis.GenerateLikeKey(userID, r.MusicUUID)
+			myredis.Rdb.Set(ctx, key, r.Action, 0)
+			// 2: 提取查询结果为1的 music_uuid 放入 res
+			if r.Action == 1 {
+				*res = append(*res, r.MusicUUID)
+			}
+		}
+	}
+	return nil
 }
